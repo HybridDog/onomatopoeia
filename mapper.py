@@ -9,7 +9,7 @@ from constants import *
 from util import *
 
 # name: (top, side)
-textures = {
+"""textures = {
     "default:bookshelf": ("default_bookshelf.png", "default_bookshelf.png"),
     "default:brick": ("default_brick.png", "default_brick.png"),
     "default:cactus": ("default_cactus_top.png", "default_cactus_side.png"),
@@ -61,14 +61,54 @@ textures = {
     "wool:pink": ("wool_pink.png", "wool_pink.png"),
     "wool:dark_grey": ("wool_dark_grey.png", "wool_dark_grey.png"),
     "wool:dark_green": ("wool_dark_green.png", "wool_dark_green.png")
-}
+}"""
+
+def startswith(s, w):
+    if len(s) < len(w): return False
+    return s[:len(w)] == w
+
+textures = {}
+
+def add_texture(node, _top, _side):
+    global textures
+    if node == "": return
+    if _top == "": top = _side
+    else: top = _top
+    if _side == "": side = _top
+    else: side = _side
+    if side == "" or top == "": return
+    textures[node] = (top, side)
+
+nodes_file = open("nodes","r")
+current_node = ""
+current_top = ""
+current_side = ""
+for line in nodes_file.readlines():
+    l = line.replace('\n','')
+    if l == "[Node]":
+        current_node = ""
+        current_top = ""
+        current_side = ""
+    if startswith(l, "Name = "):
+    	current_node = l[len("Name = "):]
+    if startswith(l, "Top texture = "):
+    	current_top = l[len("Top texture = "):]
+    if startswith(l, "Side texture = "):
+    	current_side = l[len("Side texture = "):]
+    add_texture(current_node, current_top, current_side)
+
+print "Loaded", len(textures), "nodes"
 
 blocks = {}
 
 for name in textures:
-    top = Image.open(os.path.join("textures", textures[name][0])).convert("RGBA")
-    side = Image.open(os.path.join("textures", textures[name][1])).convert("RGBA")
-    blocks[name] = build_block(top, side)
+    try:
+        top = Image.open(os.path.join("textures", textures[name][0])).convert("RGBA")
+        side = Image.open(os.path.join("textures", textures[name][1])).convert("RGBA")
+        blocks[name] = build_block(top, side)
+    except:
+        pass
+print "Loaded", len(blocks), "textures"
 
 mask = Image.open("mask.png").convert("1")
 
@@ -87,7 +127,7 @@ def drawBlock(canvas, bx, by, bz, start):
         for z in range(NODES_PER_BLOCK):
             for x in range(NODES_PER_BLOCK):
                 p = map_block.get(x, y, z)
-                if p in textures:
+                if p in blocks:
                     drawNode(canvas, x + bx * NODES_PER_BLOCK, y + by * NODES_PER_BLOCK, z + bz * NODES_PER_BLOCK, blocks[p], start)
                     maxy = max(maxy, y + by * NODES_PER_BLOCK)
     return maxy
@@ -97,7 +137,7 @@ cached_chunks = {}
 def makeChunk(cx, cz):
     maxy = -1
     canvas = Image.new("RGBA", (BLOCK_SIZE, CHUNK_HEIGHT))
-    for by in range(-8, 8):
+    for by in range(-2, 8):
         maxy = max(maxy, drawBlock(canvas, cx, by, cz, (BLOCK_SIZE/2 * (cx - cz + 1) - NODE_SIZE/2, BLOCK_SIZE/4 * (BLOCKS_PER_CHUNK - cz - cx) - NODE_SIZE/2)))
     return canvas, maxy
 
