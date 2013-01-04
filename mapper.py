@@ -9,7 +9,7 @@ from constants import *
 from util import *
 
 # name: (top, side)
-"""textures = {
+textures = {
     "default:bookshelf": ("default_bookshelf.png", "default_bookshelf.png"),
     "default:brick": ("default_brick.png", "default_brick.png"),
     "default:cactus": ("default_cactus_top.png", "default_cactus_side.png"),
@@ -61,22 +61,23 @@ from util import *
     "wool:pink": ("wool_pink.png", "wool_pink.png"),
     "wool:dark_grey": ("wool_dark_grey.png", "wool_dark_grey.png"),
     "wool:dark_green": ("wool_dark_green.png", "wool_dark_green.png")
-}"""
+}
 
 def startswith(s, w):
     if len(s) < len(w): return False
     return s[:len(w)] == w
 
-textures = {}
-
 def add_texture(node, _top, _side):
     global textures
+    if node in textures: return
     if node == "": return
     if _top == "": top = _side
     else: top = _top
     if _side == "": side = _top
     else: side = _side
     if side == "" or top == "": return
+    if '^' in top: top = top.split('^')[0]
+    if '^' in side: side = side.split('^')[0]
     textures[node] = (top, side)
 
 nodes_file = open("nodes","r")
@@ -107,7 +108,7 @@ for name in textures:
         side = Image.open(os.path.join("textures", textures[name][1])).convert("RGBA")
         blocks[name] = build_block(top, side)
     except:
-        pass
+        print "Error loading", name
 print "Loaded", len(blocks), "textures"
 
 mask = Image.open("mask.png").convert("1")
