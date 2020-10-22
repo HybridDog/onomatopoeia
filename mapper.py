@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import os.path
 import os
 import sys
@@ -380,7 +380,8 @@ blocks = {}
 for name in textures:
     top = Image.open(os.path.join("textures", textures[name][0])).convert("RGBA")
     side = Image.open(os.path.join("textures", textures[name][1])).convert("RGBA")
-    blocks[name] = build_block(top, side)
+    block_name = str.encode(name, "ascii")
+    blocks[block_name] = build_block(top, side)
 
 mask = Image.open("mask.png").convert("1")
 
@@ -388,7 +389,7 @@ map = Map(".")
 
 
 def drawNode(canvas, x, y, z, block, start):
-    canvas.paste(block, (start[0] + NODE_SIZE/2 * (z - x), start[1] + NODE_SIZE/4 * (x + z - 2 * y)), mask)
+    canvas.paste(block, (start[0] + NODE_SIZE//2 * (z - x), start[1] + NODE_SIZE//4 * (x + z - 2 * y)), mask)
 
 
 def drawBlock(canvas, bx, by, bz, start):
@@ -399,7 +400,7 @@ def drawBlock(canvas, bx, by, bz, start):
         for z in range(NODES_PER_BLOCK):
             for x in range(NODES_PER_BLOCK):
                 p = map_block.get(x, y, z)
-                if p in textures:
+                if p in blocks:
                     drawNode(canvas, x + bx * NODES_PER_BLOCK, y + by * NODES_PER_BLOCK, z + bz * NODES_PER_BLOCK, blocks[p], start)
                     maxy = max(maxy, y + by * NODES_PER_BLOCK)
     return maxy
@@ -410,7 +411,7 @@ def makeChunk(cx, cz):
     maxy = -1
     canvas = Image.new("RGBA", (BLOCK_SIZE, CHUNK_HEIGHT))
     for by in range(-8, 8):
-        maxy = max(maxy, drawBlock(canvas, cx, by, cz, (BLOCK_SIZE/2 * (cx - cz + 1) - NODE_SIZE/2, BLOCK_SIZE/4 * (BLOCKS_PER_CHUNK - cz - cx) - NODE_SIZE/2)))
+        maxy = max(maxy, drawBlock(canvas, cx, by, cz, (BLOCK_SIZE//2 * (cx - cz + 1) - NODE_SIZE//2, BLOCK_SIZE//4 * (BLOCKS_PER_CHUNK - cz - cx) - NODE_SIZE//2)))
     return canvas, maxy
 
 
@@ -429,15 +430,15 @@ def chunks3(canvas, x, z, step):
     maxy = -1
     chunk, y = makeChunk(x, z)
     maxy = max(maxy, y)
-    canvas.paste(chunk, (0, step * BLOCK_SIZE/2), chunk)
+    canvas.paste(chunk, (0, step * BLOCK_SIZE//2), chunk)
     del chunk
     chunk, y = makeChunk(x + 1, z)
     maxy = max(maxy, y)
-    canvas.paste(chunk, (-BLOCK_SIZE/2, step * BLOCK_SIZE/2 + BLOCK_SIZE/4), chunk)
+    canvas.paste(chunk, (-BLOCK_SIZE//2, step * BLOCK_SIZE//2 + BLOCK_SIZE//4), chunk)
     del chunk
     chunk, y = makeChunk(x, z + 1)
     maxy = max(maxy, y)
-    canvas.paste(chunk, (BLOCK_SIZE/2, step * BLOCK_SIZE/2 + BLOCK_SIZE/4), chunk)
+    canvas.paste(chunk, (BLOCK_SIZE//2, step * BLOCK_SIZE//2 + BLOCK_SIZE//4), chunk)
     del chunk
     return maxy
 
@@ -480,7 +481,7 @@ def stupidMakeTiles(x, z):
         if row % 4 == 0:
             tile = canvas.crop((0, last, BLOCK_SIZE, last + BLOCK_SIZE))
             last += BLOCK_SIZE
-            saveTile(tile, row / 4, col / 2)
+            saveTile(tile, row // 4, col // 2)
             del tile
             global cnt
             cnt += 1
@@ -528,8 +529,8 @@ for zoom in range(4, -1, -1):
         if zoom == 4:
             if row % 4 != 0 or col % 2 != 0:
                 continue
-            row /= 4
-            col /= 2
+            row //= 4
+            col //= 2
         if row % 2 == 1:
             row -= 1
         if col % 2 == 1:
@@ -539,8 +540,8 @@ for zoom in range(4, -1, -1):
 
     for row, col in to_join:
         #print("join {} {}".format(row, col))
-        R = row / 2
-        C = col / 2
+        R = row // 2
+        C = col // 2
         path = os.path.join("data", str(zoom), str(R))
         if not os.path.exists(path):
             os.makedirs(path)
@@ -551,6 +552,6 @@ for zoom in range(4, -1, -1):
                     tile = Image.open(os.path.join("data", str(zoom + 1), str(row + dx), "%d.png" % (col + dz))).convert("RGBA")
                 except IOError:
                     tile = Image.new("RGBA", (BLOCK_SIZE, BLOCK_SIZE))
-                tile = tile.resize((BLOCK_SIZE/2, BLOCK_SIZE/2))
-                canvas.paste(tile, (dz * BLOCK_SIZE/2, dx * BLOCK_SIZE/2), tile)
+                tile = tile.resize((BLOCK_SIZE//2, BLOCK_SIZE//2))
+                canvas.paste(tile, (dz * BLOCK_SIZE//2, dx * BLOCK_SIZE//2), tile)
         canvas.save(os.path.join(path, "%d.png" % C))

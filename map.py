@@ -1,5 +1,5 @@
 import sqlite3
-import cStringIO
+import io
 import zlib
 import array
 import os.path
@@ -28,7 +28,7 @@ class Map(object):
         r = cur.fetchone()
         if not r:
             return DummyMapBlock()
-        f = cStringIO.StringIO(r[0])
+        f = io.BytesIO(r[0])
         version = readU8(f)
         flags = f.read(1)
 
@@ -54,7 +54,7 @@ class Map(object):
 
         # Reuse the unused tail of the file
         f.close()
-        f = cStringIO.StringIO(dec_o.unused_data)
+        f = io.BytesIO(dec_o.unused_data)
 
         # zlib-compressed node metadata list
         dec_o = zlib.decompressobj()
@@ -66,7 +66,7 @@ class Map(object):
 
         # Reuse the unused tail of the file
         f.close()
-        f = cStringIO.StringIO(dec_o.unused_data)
+        f = io.BytesIO(dec_o.unused_data)
         data_after_node_metadata = dec_o.unused_data
 
         if version <= 21:

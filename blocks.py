@@ -4,7 +4,6 @@ import imp
 import os
 import os.path
 import zipfile
-from cStringIO import StringIO
 import math
 from random import randint
 import numpy
