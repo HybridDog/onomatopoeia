@@ -1,6 +1,5 @@
 # Taken from Minecraft Overviewer
 import sys
-import imp
 import os
 import os.path
 import zipfile
@@ -45,7 +44,7 @@ def transform_image_top(img):
 
     # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
     # even number that can be split in half twice
-    img = img.resize((17, 17), Image.ANTIALIAS)
+    img = img.resize((17, 17), Image.LANCZOS)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -71,7 +70,7 @@ def transform_image_side(img):
     the right side)"""
 
     # Size of the cube side before shear
-    img = img.resize((12,12), Image.ANTIALIAS)
+    img = img.resize((12,12), Image.LANCZOS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -88,7 +87,7 @@ def transform_image_slope(img):
     in the -y direction (reflect for +x direction). Used for minetracks"""
 
     # Take the same size as trasform_image_side
-    img = img.resize((12,12), Image.ANTIALIAS)
+    img = img.resize((12,12), Image.LANCZOS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -112,13 +111,13 @@ def transform_image_angle(img, angle):
     """
 
     # Take the same size as trasform_image_side
-    img = img.resize((12,12), Image.ANTIALIAS)
+    img = img.resize((12,12), Image.LANCZOS)
 
     # some values
     cos_angle = math.cos(angle)
     sin_angle = math.sin(angle)
 
-    # function_x and function_y are used to keep the result image in the 
+    # function_x and function_y are used to keep the result image in the
     # same position, and constant_x and constant_y are the coordinates
     # for the center for angle = 0.
     constant_x = 6.
@@ -127,7 +126,7 @@ def transform_image_angle(img, angle):
     function_y = -6*sin_angle
     big_term = ( (sin_angle * (function_x + constant_x)) - cos_angle* (function_y + constant_y))/cos_angle
 
-    # The numpy array is not really used, but is helpful to 
+    # The numpy array is not really used, but is helpful to
     # see the matrix used for the transformation.
     transform = numpy.array([[1./cos_angle, 0, -(function_x + constant_x)/cos_angle],
                              [-sin_angle/(cos_angle), 1., big_term ],
@@ -184,7 +183,7 @@ def build_block(top, side):
 
 def build_full_block(top, side1, side2, side3, side4, bottom=None):
     """From a top texture, a bottom texture and 4 different side textures,
-    build a full block with four differnts faces. All images should be 16x16 
+    build a full block with four differnts faces. All images should be 16x16
     image objects. Returns a 24x24 image. Can be used to render any block.
 
     side1 is in the -y face of the cube     (top left, east)
@@ -200,7 +199,7 @@ def build_full_block(top, side1, side2, side3, side4, bottom=None):
     side images and to paste the top image increment pixels lower, so if
     you use an increment of 8, it will draw a half-block.
 
-    NOTE: this method uses the bottom of the texture image (as done in 
+    NOTE: this method uses the bottom of the texture image (as done in
     minecraft with beds and cackes)
 
     """
