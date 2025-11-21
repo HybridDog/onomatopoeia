@@ -32,6 +32,16 @@ class Map(object):
         return result
 
     def getBlock(self, x, y, z):
+        """Load and decode a mapblock from the database if it exists
+
+        Args:
+            x (int): X coordinate of the mapblock
+            y (int): Y coordinate of the mapblock
+            z (int): Z coordinate of the mapblock
+        Returns:
+            MapBlock or None: The mapblock if there is one in the database at
+                the given coordinates
+        """
         cur = self.conn.cursor()
         if self.old_position_encoding:
             cur.execute(
@@ -46,7 +56,7 @@ class Map(object):
             )
         r = cur.fetchone()
         if not r:
-            return DummyMapBlock()
+            return
 
         version = r[0][0]
         f = None
@@ -181,8 +191,3 @@ class MapBlock(object):
     def get(self, x, y, z):
         datapos = x + y * 16 + z * 256
         return self.id_to_name[(self.mapdata[datapos * 2] << 8) | (self.mapdata[datapos * 2 + 1])]
-
-
-class DummyMapBlock(object):
-    def get(self, x, y, z):
-        return "default:air"

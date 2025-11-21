@@ -45,6 +45,9 @@ class Mapper:
     def drawBlock(self, canvas, bx, by, bz, start):
         """ returns max y of visible node """
         map_block = self.map.getBlock(bx, by, bz)
+        if not map_block:
+            return -1
+
         maxy = -1
         for y in range(NODES_PER_BLOCK):
             for z in range(NODES_PER_BLOCK):
