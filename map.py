@@ -1,6 +1,7 @@
 import sqlite3
 import io
 import zlib
+import zstandard
 import array
 import os.path
 from util import *
@@ -46,8 +47,18 @@ class Map(object):
         r = cur.fetchone()
         if not r:
             return DummyMapBlock()
-        f = io.BytesIO(r[0])
-        version = readU8(f)
+
+        version = r[0][0]
+        f = None
+        if version >= 29:
+            f = io.BytesIO(
+                zstandard.ZstdDecompressor()
+                .decompressobj()
+                .decompress(r[0][1:])
+            )
+        else:
+            f = io.BytesIO(r[0])
+
         flags = f.read(1)
 
         # Check flags
@@ -58,12 +69,30 @@ class Map(object):
 
         if version >= 27:
             lighting_complete = readU16(f)
+        id_to_name = {}
+        if version >= 29:
+            readU32(f)  # timestamp
+            readU8(f)  # NameIdMapping version
+            num_node_ids = readU16(f)
+            for _ in range(num_node_ids):
+                node_id = readU16(f)
+                node_name_size = readU16(f)
+                node_name = f.read(node_name_size)
+                id_to_name[node_id] = node_name
 
+        content_width = None
+        params_width = None
         if version >= 22:
             content_width = readU8(f)
             params_width = readU8(f)
 
         # Node data
+        if version >= 29:
+            mapdata = array.array(
+                "B", f.read(4096 * (content_width + params_width))
+            )
+            return MapBlock(id_to_name, mapdata)
+
         dec_o = zlib.decompressobj()
         try:
             mapdata = array.array("B", dec_o.decompress(f.read()))
@@ -120,7 +149,6 @@ class Map(object):
 
         timestamp = readU32(f)
 
-        id_to_name = {}
         if version >= 22:
             name_id_mapping_version = readU8(f)
             num_name_id_mappings = readU16(f)
