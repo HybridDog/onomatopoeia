@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 import os.path
 import os
-import sys
 import argparse
 import time
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from map import Map
 from blocks import build_block
-from constants import *
-from util import *
+from constants import (
+    BLOCK_SIZE,
+    BLOCKS_PER_CHUNK,
+    CHUNK_HEIGHT,
+    NODE_SIZE,
+    NODES_PER_BLOCK,
+)
+from util import coordsToGrid, gridToCoords
 import node_definitions
 
 
