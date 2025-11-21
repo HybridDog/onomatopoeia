@@ -9,22 +9,40 @@ from util import *
 class Map(object):
     def __init__(self, path):
         self.conn = sqlite3.connect(os.path.join(path, "map.sqlite"))
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM `blocks` LIMIT 1")
+        have_xyz_columns = {"x", "y", "z"} <= {
+            desc[0] for desc in cur.description
+        }
+        self.old_position_encoding = not have_xyz_columns
 
     def getCoordinatesToDraw(self):
         result = set()
         cur = self.conn.cursor()
-        cur.execute("SELECT `pos` FROM `blocks`")
-        while True:
-            r = cur.fetchone()
-            if not r:
-                break
-            x, y, z = getIntegerAsBlock(r[0])
+        block_positions = None
+        if self.old_position_encoding:
+            cur.execute("SELECT `pos` FROM `blocks`")
+            block_positions = [getIntegerAsBlock(r[0]) for r in cur.fetchall()]
+        else:
+            cur.execute("SELECT `x`, `y`, `z` FROM `blocks`")
+            block_positions = cur.fetchall()
+        for x, _, z in block_positions:
             result.add(coordsToGrid(x, z))
         return result
 
     def getBlock(self, x, y, z):
         cur = self.conn.cursor()
-        cur.execute("SELECT `data` FROM `blocks` WHERE `pos`==? LIMIT 1", (getBlockAsInteger(x, y, z), ))
+        if self.old_position_encoding:
+            cur.execute(
+                "SELECT `data` FROM `blocks` WHERE `pos`==? LIMIT 1",
+                (getBlockAsInteger(x, y, z),),
+            )
+        else:
+            cur.execute(
+                "SELECT `data` FROM `blocks` "
+                "WHERE `x`==? AND `y`==? AND `z`==? LIMIT 1",
+                (x, y, z),
+            )
         r = cur.fetchone()
         if not r:
             return DummyMapBlock()
